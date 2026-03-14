@@ -1,6 +1,7 @@
 namespace BusTimetable.Models
 {
-    // Represents a single scheduled departure for a route.
+	
+// Schedule system, it shows a single scheduled departure(s) for a route, it also keeps the max booking to support ticket system.
     public class Schedule
     {
         public int ScheduleID { get; set; }
@@ -11,8 +12,7 @@ namespace BusTimetable.Models
         public int Capacity { get; set; }
         public int SeatsBooked { get; set; }
 
-//something causes problem on capacity, will look into it
-        public int AvailableSeats => Capacity + SeatsBooked;
+        public int AvailableSeats => Capacity - SeatsBooked;
         public bool IsFull => SeatsBooked >= Capacity;
 
         public Schedule() { }
