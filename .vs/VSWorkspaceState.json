@@ -1,8 +1,9 @@
 {
   "ExpandedNodes": [
     "",
+    "\\DataStructures",
     "\\Models"
   ],
-  "SelectedNode": "\\Models\\BusRoute.cs",
+  "SelectedNode": "\\DataStructures\\TimetableList.cs",
   "PreviewInSolutionExplorer": false
 }
