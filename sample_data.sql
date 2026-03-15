@@ -1,5 +1,5 @@
--- Sample Data :Bus stops and routes only
--- using a mix of central London locations
+-- Sample Data - Day 05: Added RouteStops and Schedules
+
 INSERT INTO BusStops (StopName, Location, Latitude, Longitude) VALUES
     ('Victoria Station',   'Westminster',    51.4952, -0.1441),
     ('Westminster Bridge', 'Westminster',    51.5007, -0.1246),
@@ -14,10 +14,29 @@ INSERT INTO BusStops (StopName, Location, Latitude, Longitude) VALUES
     ('Angel Islington',    'Islington',      51.5322, -0.1058),
     ('Elephant & Castle',  'Southwark',      51.4940, -0.1003);
 
--- routes that connect some of these stops
--- note: King''s has double quote escape because of apostrophe
 INSERT INTO BusRoutes (RouteName, Description) VALUES
     ('Route 1 - Victoria to Bank',           'Express via Westminster and Waterloo'),
     ('Route 2 - Paddington to Liverpool St', 'Cross-city via Oxford Circus'),
     ('Route 3 - King''s Cross to Elephant',  'South London via City'),
     ('Route 4 - Victoria to Oxford Circus',  'Short hop via Westminster');
+
+-- Route Stops
+INSERT INTO RouteStops (RouteID, StopID, NextStopID, StopOrder, DistanceKm, TravelMins) VALUES
+    (1,1,2,1,1.2,5),(1,2,3,2,0.9,4),(1,3,4,3,1.5,7),(1,4,5,4,0.6,3),(1,5,NULL,5,0.0,0),
+    (2,7,8,1,1.2,5),(2,8,9,2,1.0,5),(2,9,5,3,1.3,6),(2,5,6,4,0.9,4),(2,6,NULL,5,0.0,0),
+    (3,10,11,1,0.9,4),(3,11,5,2,2.1,10),(3,5,4,3,0.6,3),(3,4,12,4,1.0,5),(3,12,NULL,5,0.0,0),
+    (4,1,2,1,1.2,5),(4,2,9,2,1.7,8),(4,9,NULL,3,0.0,0);
+
+-- Schedules
+INSERT INTO Schedules (RouteID, DepartureTime, ArrivalTime, Capacity, SeatsBooked) VALUES
+    (1,'07:00:00','07:19:00',50,0),(1,'07:30:00','07:49:00',50,0),
+    (1,'08:00:00','08:19:00',50,0),(1,'08:30:00','08:49:00',50,0),
+    (1,'09:00:00','09:19:00',60,0),(1,'12:00:00','12:19:00',60,0),
+    (1,'17:00:00','17:25:00',60,0),(1,'18:00:00','18:25:00',60,0),
+    (2,'07:15:00','07:35:00',45,0),(2,'08:00:00','08:20:00',45,0),
+    (2,'09:00:00','09:20:00',55,0),(2,'13:00:00','13:20:00',55,0),
+    (2,'17:30:00','17:50:00',55,0),
+    (3,'07:45:00','08:07:00',40,0),(3,'09:30:00','09:52:00',40,0),
+    (3,'14:00:00','14:22:00',50,0),(3,'18:30:00','18:52:00',50,0),
+    (4,'08:10:00','08:23:00',35,0),(4,'10:00:00','10:13:00',35,0),
+    (4,'15:00:00','15:13:00',35,0);
