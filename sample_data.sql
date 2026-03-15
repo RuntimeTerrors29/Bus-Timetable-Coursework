@@ -1,4 +1,4 @@
--- Sample Data - Day 05: Added RouteStops and Schedules
+-- Sample Data - Added RouteStops and Schedules
 
 INSERT INTO BusStops (StopName, Location, Latitude, Longitude) VALUES
     ('Victoria Station',   'Westminster',    51.4952, -0.1441),
