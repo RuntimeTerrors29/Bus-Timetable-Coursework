@@ -30,14 +30,15 @@ namespace BusTimetable.DataStructures
             _buckets = new ChainNode[_size];
             _count   = 0;
         }
-	// for some reason returns negative value which causes indexoutofrangeexception(on _buckets[index]) will look into it.
+
+        // hash function - mod the ID by table size to get bucket index
+        // time complexity: O(1)
         private int Hash(int stopId)
         {
-            return stopId % _size;
+            return Math.Abs(stopId % _size); // Fixed a bug that causing negative index.
         }
 
-        // add a stop to the table
-        // if same ID already exists, just update it instead of duplicating
+        // add a stop to the table, if a stop already exists it updates rather than duplicating it
         // time complexity: O(1) average, O(n) worst case
         public void Add(BusStop stop)
         {
@@ -55,9 +56,42 @@ namespace BusTimetable.DataStructures
             }
 
             var newNode = new ChainNode(stop);
-            newNode.Next     = _buckets[index];
-            _buckets[index]  = newNode;
+            newNode.Next    = _buckets[index];
+            _buckets[index] = newNode;
             _count++;
+        }
+
+        // find a stop by ID
+        // time complexity: O(1) average
+        public BusStop? GetById(int stopId)
+        {
+            int index = Hash(stopId);
+            ChainNode? current = _buckets[index];
+
+            while (current != null)
+            {
+                if (current.Data.StopID == stopId)
+                    return current.Data;
+                current = current.Next;
+            }
+            return null;
+        }
+
+        // search by exact name, not case sensitive so it has to be exact match
+        // O(n) - must scan all buckets
+        public BusStop? GetByName(string name)
+        {
+            for (int i = 0; i < _size; i++)
+            {
+                ChainNode? current = _buckets[i];
+                while (current != null)
+                {
+                    if (current.Data.StopName.Equals(name, StringComparison.OrdinalIgnoreCase))
+                        return current.Data;
+                    current = current.Next;
+                }
+            }
+            return null;
         }
     }
 }
