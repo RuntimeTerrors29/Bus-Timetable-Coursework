@@ -2,8 +2,7 @@ using BusTimetable.Models;
 
 namespace BusTimetable.DataStructures
 {
-
-    //simple linked list for tickets, no sorting needed.
+    // simple linked list for tickets, no sorting needed.
     public class TicketList
     {
         private class Node
@@ -17,8 +16,8 @@ namespace BusTimetable.DataStructures
         private int _count;
         public int Count => _count;
 
-       // O(1) - prepend to front 
-       public void Add(Ticket ticket)
+        // O(1) - prepend to front 
+        public void Add(Ticket ticket)
         {
             var node = new Node(ticket) { Next = _head };
             _head = node;
@@ -60,6 +59,35 @@ namespace BusTimetable.DataStructures
                 current = current.Next;
             }
             return results;
+        }
+
+        public bool Cancel(int ticketId)
+        {
+            var current = _head;
+            while (current != null)
+            {
+                if (current.Data.TicketID == ticketId)
+                {
+                    current.Data.Status = "Cancelled";
+                    return true; 
+                }
+                current = current.Next;
+            }
+            return false;
+        }
+
+        // this is flatten to an array, O(n)
+        public Ticket[] GetAll()
+        {
+            var all     = new Ticket[_count];
+            var current = _head;
+            int i       = 0;
+            while (current != null)
+            {
+                all[i++] = current.Data;
+                current  = current.Next;
+            }
+            return all;
         }
     }
 }
