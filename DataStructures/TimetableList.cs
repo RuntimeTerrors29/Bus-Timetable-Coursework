@@ -16,28 +16,26 @@ namespace BusTimetable.DataStructures
             }
         }
 
-        private Node? head;
+
+        
+        private Node?  head;
         private int count;
 
         public int Count => count;
 
-        // insert into correct position to keep list sorted by departure time
-
-
         public void InsertSorted(Schedule schedule)
         {
             var newNode = new Node(schedule);
-
 
             if (head == null || schedule.DepartureTime <= head.Data.DepartureTime)
             {
                 newNode.Next = head;
                 head = newNode;
                 count++;
-                return;
+                return ;
             }
 
-            var current = head;
+            var current  = head;
             while (current.Next != null &&
                    current.Next.Data.DepartureTime <= schedule.DepartureTime)
             {
@@ -49,22 +47,19 @@ namespace BusTimetable.DataStructures
             count++;
         }
 
-        // remove a schedule by its ID, returns true if found and removed
-
-
-
-        public bool  Remove(int scheduleId)
+        // removes a schedule by its ID, returns true if removed, false if not found
+        public bool Remove(int scheduleId)
         {
-            if (head  == null) return false;
+            if (head == null) return false;
 
-            if (head.Data.ScheduleID == scheduleId)
+            if   (head.Data.ScheduleID == scheduleId)
             {
-                head = head.Next;
+                head =  head.Next;
                 count--;
-                return  true;
+                return true;
             }
 
-            var current = head;
+            var  current  = head;
             while (current.Next != null)
             {
                 if (current.Next.Data.ScheduleID == scheduleId)
@@ -73,25 +68,24 @@ namespace BusTimetable.DataStructures
                     count--;
                     return true;
                 }
-                current  = current.Next;
-            }
-            return  false;
-        }
-
-        //  find a schedule by its ID
-        public Schedule? GetById(int scheduleId)
-        {
-            var  current = head;
-            while (current != null)
-            {
-                if (current.Data.ScheduleID == scheduleId)
-                    return current.Data;
                 current = current.Next;
             }
-            return null;
+            return false;
         }
 
-        // get all schedules for a route
+        public  Schedule ? GetById(int scheduleId)
+        {
+            var  current = head;
+            while (current  != null)
+            {
+                if (current.Data.ScheduleID == scheduleId)
+                    return  current.Data;
+                current = current.Next;
+            }
+            return  null;
+        }
+        // get schedules for a specific route ID
+
         public  Schedule[] GetByRoute(int routeId)
         {
             int matchCount = 0;
@@ -102,10 +96,10 @@ namespace BusTimetable.DataStructures
                 current = current.Next;
             }
 
-            var results = new Schedule[matchCount];
+            var   results = new Schedule[matchCount];
             int i = 0;
             current = head;
-            while (current != null)
+            while  (current != null)
             {
                 if (current.Data.RouteID == routeId)
                     results[i++] = current.Data;
@@ -113,5 +107,92 @@ namespace BusTimetable.DataStructures
             }
             return results;
         }
+
+        // get schedules from a given time onwards
+        public  Schedule[] GetFromTime(TimeSpan fromTime)
+        {
+            int  matchCount = 0;
+            var current = head;
+            while (current != null)
+            {
+                if (current.Data.DepartureTime >= fromTime) matchCount++;
+                current = current.Next;
+            }
+
+            var results = new Schedule[matchCount];
+            int  i =  0;
+            current = head ;
+            while (current != null )
+            {
+                if (current.Data.DepartureTime >= fromTime)
+                    results[i++] = current.Data;
+                current = current.Next;
+            }
+
+            return  results;
+        }
+
+
+        // get schedules between two times
+        
+        public Schedule[] GetBetween(TimeSpan from, TimeSpan to)
+        {
+            int matchCount = 0;
+            var current = head;
+            while (current != null)
+            {
+                var departureTime = current.Data.DepartureTime;
+                if (departureTime >= from && departureTime <= to) matchCount++;
+                if (departureTime > to) break;
+                current = current.Next;
+            }
+
+            var results =  new Schedule[matchCount];
+            int i = 0;
+            current = head;
+            while (current != null)
+            {
+                var departureTime = current.Data.DepartureTime;
+                if (departureTime >= from && departureTime <= to)
+                    results[i++] = current.Data;
+                if (departureTime > to) break;
+                current = current.Next;
+            }
+            return  results;
+        }
+
+        // returns all schedules in  the list
+
+
+        public Schedule[] GetAll()
+        {
+            var all = new Schedule[count];
+            var current = head;
+            int i = 0;
+
+            while (current != null)
+            {
+                all[i++] = current.Data;
+                current = current.Next;
+            }
+            return  all;
+        }
+
+        // update an existing schedule by its ID, returns true if updated, false if not found
+        public bool Update(Schedule updated)
+        {
+            var  current = head;
+            while (current != null)
+            {
+                if (current.Data.ScheduleID ==  updated.ScheduleID)
+                {
+                    current.Data = updated;
+                    return true;
+                }
+                current  = current.Next;
+            }
+            return false;
+        }
     }
 }
+
