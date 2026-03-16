@@ -1,10 +1,10 @@
 using BusTimetable.models;
 
-namespace  BusTimetable.DataStructures
+namespace BusTimetable.DataStructures
 {
     public class TimetableList
     {
-         private class Node
+        private class Node
         {
             public Schedule Data;
             public Node? Next;
@@ -16,16 +16,18 @@ namespace  BusTimetable.DataStructures
             }
         }
 
-        // head of the linked list and count of schedules
         private Node? head;
         private int count;
 
         public int Count => count;
 
         // insert into correct position to keep list sorted by departure time
+
+
         public void InsertSorted(Schedule schedule)
         {
             var newNode = new Node(schedule);
+
 
             if (head == null || schedule.DepartureTime <= head.Data.DepartureTime)
             {
@@ -48,33 +50,68 @@ namespace  BusTimetable.DataStructures
         }
 
         // remove a schedule by its ID, returns true if found and removed
-        public bool Remove(int scheduleId)
-        {
-            if (head == null) return  false;
 
-            if  (head.Data.ScheduleID ==  scheduleId)
-            { 
+
+
+        public bool  Remove(int scheduleId)
+        {
+            if (head  == null) return false;
+
+            if (head.Data.ScheduleID == scheduleId)
+            {
                 head = head.Next;
                 count--;
-                return true;
+                return  true;
             }
 
-
-            // traverse the list to find the schedule to remove
             var current = head;
-
-            while  (current.Next != null)
+            while (current.Next != null)
             {
-                if  (current.Next.Data.ScheduleID == scheduleId)
+                if (current.Next.Data.ScheduleID == scheduleId)
                 {
                     current.Next = current.Next.Next;
                     count--;
                     return true;
                 }
+                current  = current.Next;
+            }
+            return  false;
+        }
+
+        //  find a schedule by its ID
+        public Schedule? GetById(int scheduleId)
+        {
+            var  current = head;
+            while (current != null)
+            {
+                if (current.Data.ScheduleID == scheduleId)
+                    return current.Data;
                 current = current.Next;
             }
-             return false;
+            return null;
+        }
+
+        // get all schedules for a route
+        public  Schedule[] GetByRoute(int routeId)
+        {
+            int matchCount = 0;
+            var current = head;
+            while (current != null)
+            {
+                if  (current.Data.RouteID == routeId) matchCount++;
+                current = current.Next;
+            }
+
+            var results = new Schedule[matchCount];
+            int i = 0;
+            current = head;
+            while (current != null)
+            {
+                if (current.Data.RouteID == routeId)
+                    results[i++] = current.Data;
+                current = current.Next;
+            }
+            return results;
         }
     }
 }
-
