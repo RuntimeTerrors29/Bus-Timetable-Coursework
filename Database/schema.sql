@@ -39,3 +39,21 @@ CREATE TABLE IF NOT EXISTS Schedules (
     Capacity INTEGER NOT NULL DEFAULT 50,  -- number of seats on the bus
     SeatsBooked  INTEGER NOT NULL DEFAULT 0   --number of seats already reserved
 );
+
+-- Stores passenger details
+CREATE TABLE IF NOT EXISTS Passengers (
+
+    PassengerID INTEGER PRIMARY KEY AUTOINCREMENT,
+    FullName TEXT NOT NULL,
+    Email TEXT NOT NULL DEFAULT ''  -- passenger email
+);
+
+-- Stores ticket bookings for passengers on a schedule
+CREATE TABLE IF NOT EXISTS Tickets (
+    TicketID    INTEGER PRIMARY KEY AUTOINCREMENT,
+    PassengerID INTEGER NOT NULL REFERENCES Passengers(PassengerID),
+    ScheduleID  INTEGER NOT NULL REFERENCES Schedules(ScheduleID),
+    BookingDate TEXT  NOT NULL,  -- when booked
+    Price  REAL NOT NULL DEFAULT 0.0,  -- ticket price
+    Status TEXT NOT NULL DEFAULT 'Active'  -- active/cancelled
+);
