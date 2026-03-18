@@ -1,9 +1,8 @@
 {
   "ExpandedNodes": [
     "",
-    "\\DataStructures",
-    "\\Models"
+    "\\Tests"
   ],
-  "SelectedNode": "\\DataStructures\\TicketList.cs",
+  "SelectedNode": "\\Tests\\TicketTests.cs",
   "PreviewInSolutionExplorer": false
 }
