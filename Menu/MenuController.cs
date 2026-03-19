@@ -53,7 +53,7 @@ namespace BusTimetable.Menu
         private void ViewTimetable()
         {
             var all = _timetable.GetAll();
-            Console.WriteLine($"\n  {all.Length} scheduled services:\n"); // ✅ FIXED Bug #5: .Length not .Count
+            Console.WriteLine($"\n  {all.Length} scheduled services:\n"); 
             foreach (var s in all)
                 Console.WriteLine($"  {s}");
         }
