@@ -2,15 +2,20 @@ using BusTimetable.Database;
 using BusTimetable.DataStructures;
 using BusTimetable.Menu;
 
-const string dbPath = "bus.db";
+Console.WriteLine("=== Bus Timetable & Ticketing System ===");
+Console.WriteLine();
 
-Console.WriteLine("Bus Timetable & Ticketing System");
-Console.WriteLine("Starting up...");
+Console.Write("Enter database path (press Enter for default 'bus.db'): ");
+string input  = Console.ReadLine()?.Trim() ?? "";
+string dbPath = string.IsNullOrEmpty(input) ? "bus.db" : input;
+
+Console.WriteLine($"\nUsing database: {dbPath}");
+Console.WriteLine("Loading data...");
 
 var db        = new DatabaseManager(dbPath);
-var stops     = new BusTimetable.DataStructures.BusStopHashTable();
-var timetable = new BusTimetable.DataStructures.TimetableList();
-var tickets   = new BusTimetable.DataStructures.TicketList();
+var stops     = new BusStopHashTable();
+var timetable = new TimetableList();
+var tickets   = new TicketList();
 
 db.EnsureSchema();
 db.SeedIfEmpty();
@@ -18,6 +23,9 @@ db.LoadStops(stops);
 db.LoadSchedules(timetable);
 db.LoadTickets(tickets);
 var passengers = db.LoadPassengers();
+
+Console.WriteLine($"  Loaded {stops.Count} stops, {timetable.Count} schedules, " +
+                  $"{tickets.Count} tickets, {passengers.Count} passengers.");
 
 var menu = new MenuController(stops, timetable, tickets, passengers, db);
 menu.Run();
