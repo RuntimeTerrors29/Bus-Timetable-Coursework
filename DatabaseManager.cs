@@ -32,7 +32,6 @@ namespace BusTimetable.Database
             using var checkCmd = conn.CreateCommand();
             checkCmd.CommandText = "SELECT COUNT(*) FROM BusRoutes;";
             if ((long)checkCmd.ExecuteScalar()! > 0) return;
-
             ExecuteNonQuery(conn, @"INSERT INTO BusStops (StopName,Location,Latitude,Longitude) VALUES ('Victoria Station','Westminster',51.4952,-0.1441),('Westminster Bridge','Westminster',51.5007,-0.1246),('Waterloo Station','Lambeth',51.5031,-0.1132),('London Bridge','Southwark',51.5055,-0.0877),('Bank','City of London',51.5133,-0.0886),('Liverpool Street','Hackney',51.5178,-0.0823),('Paddington Station','Westminster',51.5154,-0.1755),('Marble Arch','Westminster',51.5130,-0.1588),('Oxford Circus','Westminster',51.5154,-0.1419),('Kings Cross','Islington',51.5308,-0.1238),('Angel Islington','Islington',51.5322,-0.1058),('Elephant Castle','Southwark',51.4940,-0.1003);");
             ExecuteNonQuery(conn, @"INSERT INTO BusRoutes (RouteName,Description) VALUES ('Route 1 - Victoria to Bank','Express via Westminster and Waterloo'),('Route 2 - Paddington to Liverpool St','Cross-city via Oxford Circus'),('Route 3 - Kings Cross to Elephant','South London via City'),('Route 4 - Victoria to Oxford Circus','Short hop via Westminster');");
             ExecuteNonQuery(conn, @"INSERT INTO RouteStops (RouteID,StopID,NextStopID,StopOrder,DistanceKm,TravelMins) VALUES (1,1,2,1,1.2,5),(1,2,3,2,0.9,4),(1,3,4,3,1.5,7),(1,4,5,4,0.6,3),(1,5,NULL,5,0.0,0),(2,7,8,1,1.2,5),(2,8,9,2,1.0,5),(2,9,5,3,1.3,6),(2,5,6,4,0.9,4),(2,6,NULL,5,0.0,0),(3,10,11,1,0.9,4),(3,11,5,2,2.1,10),(3,5,4,3,0.6,3),(3,4,12,4,1.0,5),(3,12,NULL,5,0.0,0),(4,1,2,1,1.2,5),(4,2,9,2,1.7,8),(4,9,NULL,3,0.0,0);");
@@ -62,32 +61,21 @@ namespace BusTimetable.Database
                 timetable.InsertSorted(new Schedule(reader.GetInt32(0),reader.GetInt32(1),reader.GetString(2),TimeSpan.Parse(reader.GetString(3)),TimeSpan.Parse(reader.GetString(4)),reader.GetInt32(5),reader.GetInt32(6)));
         }
 
-        // ⚠️ BUG 6: Missing JOIN with BusRoutes — RouteName will be empty string
-        // because it's not being selected from the query. Column index 4 is Price,
-        // not RouteName. This means all loaded tickets show no route name.
-        // Bogdan fixes this in Day 10.
         public void LoadTickets(TicketList tickets)
         {
             using var conn = OpenConnection();
             using var cmd  = conn.CreateCommand();
             cmd.CommandText = @"
                 SELECT t.TicketID, t.PassengerID, p.FullName,
-                       t.ScheduleID,
+                       t.ScheduleID, r.RouteName,
                        t.BookingDate, t.Price, t.Status
                 FROM   Tickets t
-                JOIN   Passengers p ON p.PassengerID = t.PassengerID;";
+                JOIN   Passengers p ON p.PassengerID = t.PassengerID
+                JOIN   Schedules  s ON s.ScheduleID  = t.ScheduleID
+                JOIN   BusRoutes  r ON r.RouteID      = s.RouteID;";
             using var reader = cmd.ExecuteReader();
             while (reader.Read())
-            {
-                tickets.Add(new Ticket(
-                    reader.GetInt32(0), reader.GetInt32(1), reader.GetString(2),
-                    reader.GetInt32(3),
-                    "",   // ⚠️ BUG 6: RouteName always empty - missing JOIN
-                    DateTime.Parse(reader.GetString(4)),
-                    (decimal)reader.GetDouble(5),
-                    reader.GetString(6)
-                ));
-            }
+                tickets.Add(new Ticket(reader.GetInt32(0),reader.GetInt32(1),reader.GetString(2),reader.GetInt32(3),reader.GetString(4),DateTime.Parse(reader.GetString(5)),(decimal)reader.GetDouble(6),reader.GetString(7)));
         }
 
         public PassengerList LoadPassengers()
@@ -100,6 +88,61 @@ namespace BusTimetable.Database
             while (reader.Read())
                 list.Add(new Passenger(reader.GetInt32(0),reader.GetString(1),reader.GetString(2)));
             return list;
+        }
+
+        public int AddPassenger(string fullName, string email)
+        {
+            using var conn = OpenConnection();
+            using var cmd  = conn.CreateCommand();
+            cmd.CommandText = "INSERT INTO Passengers (FullName, Email) VALUES (@name, @email);";
+            cmd.Parameters.AddWithValue("@name",  fullName);
+            cmd.Parameters.AddWithValue("@email", email);
+            cmd.ExecuteNonQuery();
+            cmd.CommandText = "SELECT last_insert_rowid();";
+            return (int)(long)cmd.ExecuteScalar()!;
+        }
+
+        // ✅ FIXED Bug #8: Now updates SeatsBooked in Schedules table
+        public int AddBooking(int passengerId, int scheduleId, decimal price)
+        {
+            using var conn = OpenConnection();
+            using var cmd  = conn.CreateCommand();
+            cmd.CommandText = @"
+                INSERT INTO Tickets (PassengerID, ScheduleID, BookingDate, Price, Status)
+                VALUES (@pid, @sid, @date, @price, 'Active');";
+            cmd.Parameters.AddWithValue("@pid",   passengerId);
+            cmd.Parameters.AddWithValue("@sid",   scheduleId);
+            cmd.Parameters.AddWithValue("@date",  DateTime.Now.ToString("o"));
+            cmd.Parameters.AddWithValue("@price", (double)price);
+            cmd.ExecuteNonQuery();
+
+            cmd.CommandText = "SELECT last_insert_rowid();";
+            int ticketId = (int)(long)cmd.ExecuteScalar()!;
+
+            // ✅ FIXED Bug #8: increment seat counter in DB
+            using var cmd2 = conn.CreateCommand();
+            cmd2.CommandText = "UPDATE Schedules SET SeatsBooked = SeatsBooked + 1 WHERE ScheduleID = @sid;";
+            cmd2.Parameters.AddWithValue("@sid", scheduleId);
+            cmd2.ExecuteNonQuery();
+
+            return ticketId;
+        }
+
+        // cancel ticket — update status and give seat back
+        public bool CancelBooking(int ticketId, int scheduleId)
+        {
+            using var conn = OpenConnection();
+            using var cmd  = conn.CreateCommand();
+            cmd.CommandText = "UPDATE Tickets SET Status = 'Cancelled' WHERE TicketID = @tid AND Status = 'Active';";
+            cmd.Parameters.AddWithValue("@tid", ticketId);
+            int rows = cmd.ExecuteNonQuery();
+            if (rows == 0) return false;
+
+            using var cmd2 = conn.CreateCommand();
+            cmd2.CommandText = "UPDATE Schedules SET SeatsBooked = SeatsBooked - 1 WHERE ScheduleID = @sid;";
+            cmd2.Parameters.AddWithValue("@sid", scheduleId);
+            cmd2.ExecuteNonQuery();
+            return true;
         }
 
         private SqliteConnection OpenConnection()
@@ -117,4 +160,3 @@ namespace BusTimetable.Database
         }
     }
 }
-
