@@ -3,25 +3,43 @@ CST2550 Group Coursework — Middlesex University London
 
 ## Overview
 A console application for managing bus timetables and ticket bookings.
-Built with C# .NET 8 and SQLite. Uses custom data structures (no STL collections).
+Built with C# .NET 8 and SQLite. Uses custom data structures throughout (no STL collections).
 
 ## Tech Stack
 - Language: C# .NET 8
-- Database: SQLite (via Microsoft.Data.Sqlite)
-- Testing: MSTest
-- Data Structures: Custom hash table, linked lists (no List<T> or Dictionary<T>)
+- Database: SQLite (via Microsoft.Data.Sqlite 8.0.0)
+- Testing: MSTest 3.1.1
+- Data Structures: Custom hash table, sorted linked list, singly linked lists
 
 ## How to Run
-1. Install .NET 8 SDK
-2. Run: `dotnet run --project BusTimetable`
-3. Enter the path to your SQLite database when prompted (or press Enter for default)
+```bash
+dotnet restore
+dotnet run --project BusTimetable
+```
+Enter the path to your SQLite database when prompted, or press Enter for default (bus.db).
+
+## How to Test
+```bash
+dotnet test
+```
 
 ## Project Structure
 ```
 BusTimetable/
-  Models/          - Domain models (BusStop, BusRoute, Schedule, Ticket, Passenger)
-  DataStructures/  - Custom data structures (BusStopHashTable, TimetableList, TicketList, PassengerList)
+  Models/          - BusStop, BusRoute, Schedule, Ticket, Passenger
+  DataStructures/  - BusStopHashTable, TimetableList, TicketList, PassengerList
   Database/        - DatabaseManager, schema.sql, sample_data.sql
-  Menu/            - MenuController (all user interaction)
-BusTimetable.Tests/  - Unit tests (MSTest)
+  Menu/            - MenuController
+  Program.cs
+BusTimetable.Tests/
+  BusRouteTests.cs, BusStopTests.cs, ScheduleTests.cs
+  PassengerTests.cs, TicketTests.cs, DataStructuresTests.cs
 ```
+
+## Data Structures
+| Structure | Backing | Use |
+|---|---|---|
+| BusStopHashTable | Separate chaining, array of linked lists | O(1) stop lookup by ID |
+| TimetableList | Sorted single linked list | Departure-ordered schedules |
+| TicketList | Single linked list | Ticket storage and lookup |
+| PassengerList | Single linked list | Passenger storage |
