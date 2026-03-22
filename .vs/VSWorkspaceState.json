@@ -1,8 +1,9 @@
 {
   "ExpandedNodes": [
     "",
+    "\\Menu",
     "\\Tests"
   ],
-  "SelectedNode": "\\Tests\\DataStructureTests.cs",
+  "SelectedNode": "\\Menu\\MenuController.cs",
   "PreviewInSolutionExplorer": false
 }
