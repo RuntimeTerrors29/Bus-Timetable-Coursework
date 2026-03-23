@@ -1,140 +1,166 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using BusTimetable.models;
+using BusTimetable.Database;
 using BusTimetable.DataStructures;
+using BusTimetable.Models;
 
-namespace BusTimetable.Tests
+namespace BusTimetable.Menu
 {
-    [TestClass]
-    public  class  DataStructuresTests
+    // handles all user interaction with the menu
+    // keeps refs to data structures and DB so changes stay in sync
+    public class MenuController
     {
-
-        // BusStopHashTable tests 
-        [TestMethod]
-        public  void  HashTable_Add_MultipleStops_AllRetrievable()
-        {
-            var  table = new BusStopHashTable(8);
-            for  (int i = 1; i <= 10; i++)
-                table.Add(new BusStop(i, $"Stop {i}", "Location", 0, 0));
-            Assert.AreEqual(10, table.Count);
-            for  (int i = 1; i <= 10; i++)
-                Assert.IsNotNull(table.GetById(i));
-        }
-
-        [TestMethod]
-        public void  HashTable_GetAll_ReturnsAllStops()
-        {
-            var table = new BusStopHashTable();
-            table.Add(new BusStop(1, "A", "L", 0, 0));
-            table.Add(new BusStop(2, "B", "L", 0, 0));
-            Assert.AreEqual(2, table.GetAll().Length);
-        }
-
-        [TestMethod]
-        public void  HashTable_Remove_NonExistentId_ReturnsFalse()
-        {
-            Assert.IsFalse(new  BusStopHashTable().Remove(999));
-        }
-
-
-        // TimetableList tests
-
-
-        [TestMethod]
-        public void HashTable_EmptyTable_CountIsZero()
-        {
-            Assert.AreEqual(0, new BusStopHashTable().Count);
-        }
-
-        [TestMethod]
-        public void  TimetableList_InsertSorted_MaintainsDepartureOrder()
-        {
-            var list = new TimetableList();
-            list.InsertSorted(MakeSched(1, new TimeSpan(9, 0, 0)));
-            list.InsertSorted(MakeSched(2, new TimeSpan(7, 0, 0)));
-            list.InsertSorted(MakeSched(3, new TimeSpan(8, 0, 0)));
-            var all = list.GetAll();
-            Assert.AreEqual(new TimeSpan(7, 0, 0), all[0].DepartureTime);
-            Assert.AreEqual(new TimeSpan(9, 0, 0), all[2].DepartureTime);
-        }
-
-        [TestMethod]
-        public void  TimetableList_GetByRoute_ReturnsOnlyMatchingRoute()
-        {
-            var list = new TimetableList();
-            list.InsertSorted(MakeSched(1, new TimeSpan(7, 0,  0), routeId: 1));
-            list.InsertSorted(MakeSched(2, new TimeSpan(8, 0, 0), routeId: 2));
-            list.InsertSorted(MakeSched(3, new TimeSpan(9, 0, 0), routeId: 1));
-            Assert.AreEqual(2, list.GetByRoute(1).Length);
-        }
-
-        [TestMethod]
-        public void TimetableList_GetBetween_ReturnsCorrectRange()
-        {
-            var list = new TimetableList();
-            list.InsertSorted(MakeSched(1, new TimeSpan(7,  0, 0)));
-            list.InsertSorted(MakeSched(2, new TimeSpan(8, 0, 0)));
-            list.InsertSorted(MakeSched(3, new TimeSpan(9, 0, 0)));
-            list.InsertSorted(MakeSched(4, new TimeSpan(10, 0, 0)));
-            Assert.AreEqual(2, list.GetBetween(new TimeSpan(8 , 0, 0), new TimeSpan(9, 0, 0)).Length);
-        }
-
-        [TestMethod]
-
-        // This test assumes Remove returns true if a node was removed and false if not found
-        public void  TimetableList_Remove_MiddleNode_CountDecreases()
-        {
-            var list = new TimetableList();
-            list.InsertSorted(MakeSched(1,  new TimeSpan(7, 0, 0)));
-            list.InsertSorted(MakeSched(2, new  TimeSpan(8, 0, 0)));
-            list.InsertSorted(MakeSched(3, new  TimeSpan(9, 0, 0)));
-            Assert.IsTrue(list.Remove(2));
-            Assert.AreEqual(2, list.Count);
-        }
-
-        // TicketList tests
-        [TestMethod]
-        public void TicketList_Add_IncreasesCount()
-        {
-            var list = new TicketList();
-            list.Add(MakeTicket(1, 1));
-            list.Add(MakeTicket(2, 1));
-            Assert.AreEqual(2, list.Count);
-        }
-
-        [TestMethod]
-        public void TicketList_GetByPassenger_ReturnsOnlyPassengersTickets()
-        {
-            var list = new TicketList();
-            list.Add(MakeTicket(1, 1));
-            list.Add(MakeTicket(2, 1));
-            list.Add(MakeTicket(3, 2));
-            Assert.AreEqual(2, list.GetByPassenger(1).Length);
-        }
-
+        private readonly BusStopHashTable _stops;
+        private readonly TimetableList _timetable;
+        private readonly TicketList _tickets;
+        private readonly PassengerList _passengers;
+        private readonly DatabaseManager _db;
         
-        [TestMethod]
-        public void TicketList_Cancel_AlreadyCancelled_ReturnsFalse()
+        // Constructor takes all data structures and database manager as dependencies
+        public MenuController(BusStopHashTable stops, TimetableList timetable,
+                              TicketList tickets, PassengerList passengers, DatabaseManager db)
         {
-            var list  = new TicketList();
-            list.Add(new  Ticket(1, 1, "A", 1, "R", DateTime.Now, 3.5m, "Cancelled"));
-            Assert.IsFalse(list.Cancel(1));
+            _stops = stops; _timetable = timetable;
+            _tickets = tickets; _passengers = passengers; _db = db;
         }
 
-        [TestMethod]
-        public void  TicketList_GetAll_ReturnsAllTickets()
+        // loops until user picks exit
+        public void Run()
         {
-             var list = new TicketList();
-            list.Add(MakeTicket(1, 1));
-            list.Add(MakeTicket(2, 2));
-            list.Add(MakeTicket(3, 1));
-            Assert.AreEqual(3, list.GetAll().Length);
+            Console.WriteLine("\n=== Bus Timetable & Ticketing System ===\n");
+            bool running = true;
+            while (running)
+            {
+                ShowMainMenu();
+                string choice = Console.ReadLine()?.Trim() ?? "";
+                switch (choice)
+                {
+                    case "1": ViewTimetable(); break;
+                    case "2": SearchStops();   break;
+                    case "3": BookTicket();    break;
+                    case "4": CancelTicket();  break;
+                    case "5": ViewMyTickets(); break;
+                    case "6": AdminMenu();     break;
+                    case "0": running = false; break;
+                    default:
+                        Console.WriteLine("  Invalid option, please try again.");
+                        break;
+                }
+            }
+        }
+        
+        // Private methods for each menu action
+        private static void ShowMainMenu()
+        {
+            Console.WriteLine("\n--- Main Menu ---");
+            Console.WriteLine("  1. View timetable");
+            Console.WriteLine("  2. Search bus stops");
+            Console.WriteLine("  3. Book a ticket");
+            Console.WriteLine("  4. Cancel a ticket");
+            Console.WriteLine("  5. View my tickets");
+            Console.WriteLine("  6. Admin");
+            Console.WriteLine("  0. Exit");
+            Console.Write("\nSelect option: ");
         }
 
-        //  helper methods
-        private static Schedule MakeSched(int id, TimeSpan dep, int routeId = 1)
-            => new Schedule(id, routeId, "Route", dep, dep.Add(TimeSpan.FromMinutes(20)), 50, 0);
+        private void ViewTimetable()
+        {
+            var all = _timetable.GetAll();
+            Console.WriteLine($"\n  {all.Length} scheduled services:\n");
+            foreach (var s in all)
+                Console.WriteLine($"  {s}");
+        }
+        
+        // Method to search bus stops by name and display results
+        private void SearchStops()
+        {
+            Console.Write("\n  Enter stop name to search: ");
+            string query = Console.ReadLine()?.Trim() ?? "";
+            if (string.IsNullOrEmpty(query)) return;
+            var results = _stops.SearchByName(query);
+            Console.WriteLine($"\n  Found {results.Length} stop(s):");
+            foreach (var stop in results)
+                Console.WriteLine($"  {stop}");
+        }
 
-        private static Ticket MakeTicket(int id, int passId)
-            => new Ticket(id, passId, "Name", 1, "Route", DateTime.Now, 3.50m);
+        private void BookTicket()
+        {
+            Console.Write("\n  Enter your full name: ");
+            string name = Console.ReadLine()?.Trim() ?? "";
+            if (string.IsNullOrEmpty(name)) { Console.WriteLine("  Name cannot be empty."); return; }
+            Console.Write("  Enter your email: ");
+            string email = Console.ReadLine()?.Trim() ?? "";
+            Console.Write("  Enter Schedule ID to book: ");
+            if (!int.TryParse(Console.ReadLine(), out int schedId)) { Console.WriteLine("  Please enter a valid number."); return; }
+            var schedule = _timetable.GetById(schedId);
+            if (schedule == null) { Console.WriteLine($"  No schedule found with ID {schedId}."); return; }
+            if (schedule.IsFull)  { Console.WriteLine("  Sorry, that service is fully booked."); return; }
+            int passId   = _db.AddPassenger(name, email);
+            int ticketId = _db.AddBooking(passId, schedId, 3.50m);
+            _passengers.Add(new Passenger(passId, name, email));
+            schedule.SeatsBooked++;
+            _tickets.Add(new Ticket(ticketId, passId, name, schedId, schedule.RouteName, DateTime.Now, 3.50m));
+            Console.WriteLine($"\n  Booking confirmed! Ticket #{ticketId} — {schedule.RouteName} at {schedule.DepartureTime:hh\\:mm}");
+        }
+        
+        // Method to cancel a ticket by ID, with error handling and seat count adjustment
+        private void CancelTicket()
+        {
+            Console.Write("\n  Enter Ticket ID to cancel: ");
+            if (!int.TryParse(Console.ReadLine(), out int ticketId)) { Console.WriteLine("  Please enter a valid number."); return; }
+            var ticket = _tickets.GetById(ticketId);
+            if (ticket == null) { Console.WriteLine($"  No ticket found with ID {ticketId}."); return; }
+            bool cancelled = _tickets.Cancel(ticketId);
+            if (!cancelled) { Console.WriteLine("  Could not cancel — this ticket may already be cancelled."); return; }
+            var schedule = _timetable.GetById(ticket.ScheduleID);
+            if (schedule != null) schedule.SeatsBooked--;
+            _db.CancelBooking(ticketId, ticket.ScheduleID);
+            Console.WriteLine($"  Ticket #{ticketId} has been cancelled.");
+        }
+
+        private void ViewMyTickets()
+        {
+            Console.Write("\n  Enter Passenger ID: ");
+            if (!int.TryParse(Console.ReadLine(), out int passId)) { Console.WriteLine("  Please enter a valid number."); return; }
+            var myTickets = _tickets.GetByPassenger(passId);
+            if (myTickets.Length == 0) { Console.WriteLine("  No tickets found for this passenger."); return; }
+            Console.WriteLine($"\n  Found {myTickets.Length} ticket(s):");
+            foreach (var t in myTickets)
+                Console.WriteLine($"  {t}");
+        }
+
+        private void AdminMenu()
+        {
+            Console.WriteLine("\n--- Admin Menu ---");
+            Console.WriteLine("  1. Update schedule capacity");
+            Console.WriteLine("  0. Back");
+            Console.Write("\nSelect: ");
+            string choice = Console.ReadLine()?.Trim() ?? "";
+            if (choice == "1") UpdateCapacity();
+        }
+        
+        // Updates the max passenger capacity for a scheduled service
+        private void UpdateCapacity()
+        {
+            Console.Write("\n  Enter Schedule ID: ");
+            if (!int.TryParse(Console.ReadLine(), out int schedId)) { Console.WriteLine("  Please enter a valid number."); return; }
+            var schedule = _timetable.GetById(schedId);
+            if (schedule == null) { Console.WriteLine($"  No schedule found with ID {schedId}."); return; }
+            Console.Write($"  Current capacity: {schedule.Capacity}. New capacity: ");
+            if (!int.TryParse(Console.ReadLine(), out int newCap) || newCap < schedule.SeatsBooked)
+            {
+                Console.WriteLine($"  Invalid — new capacity must be at least {schedule.SeatsBooked} (seats already booked).");
+                return;
+            }
+            schedule.Capacity = newCap;
+            _timetable.Update(schedule);
+            _db.UpdateSchedule(schedule);
+            Console.WriteLine($"  Schedule #{schedId} capacity updated to {newCap}.");
+        }
+
+        private int GetOrCreatePassenger(string name, string email)
+        {
+            int passId = _db.AddPassenger(name, email);
+            _passengers.Add(new Passenger(passId, name, email));
+            return passId;
+        }
     }
 }
