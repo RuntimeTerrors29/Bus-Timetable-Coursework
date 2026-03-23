@@ -4,6 +4,8 @@ using BusTimetable.Models;
 
 namespace BusTimetable.Menu
 {
+    // handles all user interaction with the menu
+    // keeps refs to data structures and DB so changes stay in sync
     public class MenuController
     {
         private readonly BusStopHashTable _stops;
@@ -11,7 +13,7 @@ namespace BusTimetable.Menu
         private readonly TicketList _tickets;
         private readonly PassengerList _passengers;
         private readonly DatabaseManager _db;
-     
+        
         // Constructor takes all data structures and database manager as dependencies
         public MenuController(BusStopHashTable stops, TimetableList timetable,
                               TicketList tickets, PassengerList passengers, DatabaseManager db)
@@ -20,6 +22,7 @@ namespace BusTimetable.Menu
             _tickets = tickets; _passengers = passengers; _db = db;
         }
 
+        // loops until user picks exit
         public void Run()
         {
             Console.WriteLine("\n=== Bus Timetable & Ticketing System ===\n");
@@ -37,10 +40,13 @@ namespace BusTimetable.Menu
                     case "5": ViewMyTickets(); break;
                     case "6": AdminMenu();     break;
                     case "0": running = false; break;
-                    default: Console.WriteLine("  Invalid option, please try again."); break;
+                    default:
+                        Console.WriteLine("  Invalid option, please try again.");
+                        break;
                 }
             }
         }
+        
         // Private methods for each menu action
         private static void ShowMainMenu()
         {
@@ -62,7 +68,7 @@ namespace BusTimetable.Menu
             foreach (var s in all)
                 Console.WriteLine($"  {s}");
         }
-     
+        
         // Method to search bus stops by name and display results
         private void SearchStops()
         {
@@ -79,48 +85,48 @@ namespace BusTimetable.Menu
         {
             Console.Write("\n  Enter your full name: ");
             string name = Console.ReadLine()?.Trim() ?? "";
+            if (string.IsNullOrEmpty(name)) { Console.WriteLine("  Name cannot be empty."); return; }
             Console.Write("  Enter your email: ");
             string email = Console.ReadLine()?.Trim() ?? "";
             Console.Write("  Enter Schedule ID to book: ");
-            if (!int.TryParse(Console.ReadLine(), out int schedId)) { Console.WriteLine("  Invalid ID."); return; }
+            if (!int.TryParse(Console.ReadLine(), out int schedId)) { Console.WriteLine("  Please enter a valid number."); return; }
             var schedule = _timetable.GetById(schedId);
-            if (schedule == null) { Console.WriteLine("  Schedule not found."); return; }
+            if (schedule == null) { Console.WriteLine($"  No schedule found with ID {schedId}."); return; }
             if (schedule.IsFull)  { Console.WriteLine("  Sorry, that service is fully booked."); return; }
-
-            int passId   = GetOrCreatePassenger(name, email);
+            int passId   = _db.AddPassenger(name, email);
             int ticketId = _db.AddBooking(passId, schedId, 3.50m);
+            _passengers.Add(new Passenger(passId, name, email));
             schedule.SeatsBooked++;
             _tickets.Add(new Ticket(ticketId, passId, name, schedId, schedule.RouteName, DateTime.Now, 3.50m));
-            Console.WriteLine($"\n  Booked! Ticket #{ticketId} — {schedule.RouteName} at {schedule.DepartureTime:hh\\:mm}");
+            Console.WriteLine($"\n  Booking confirmed! Ticket #{ticketId} — {schedule.RouteName} at {schedule.DepartureTime:hh\\:mm}");
         }
-     
+        
         // Method to cancel a ticket by ID, with error handling and seat count adjustment
         private void CancelTicket()
         {
             Console.Write("\n  Enter Ticket ID to cancel: ");
-            if (!int.TryParse(Console.ReadLine(), out int ticketId)) { Console.WriteLine("  Invalid ID."); return; }
+            if (!int.TryParse(Console.ReadLine(), out int ticketId)) { Console.WriteLine("  Please enter a valid number."); return; }
             var ticket = _tickets.GetById(ticketId);
-            if (ticket == null) { Console.WriteLine("  Ticket not found."); return; }
+            if (ticket == null) { Console.WriteLine($"  No ticket found with ID {ticketId}."); return; }
             bool cancelled = _tickets.Cancel(ticketId);
-            if (!cancelled) { Console.WriteLine("  Could not cancel (already cancelled?)."); return; }
+            if (!cancelled) { Console.WriteLine("  Could not cancel — this ticket may already be cancelled."); return; }
             var schedule = _timetable.GetById(ticket.ScheduleID);
             if (schedule != null) schedule.SeatsBooked--;
             _db.CancelBooking(ticketId, ticket.ScheduleID);
-            Console.WriteLine($"  Ticket #{ticketId} cancelled.");
+            Console.WriteLine($"  Ticket #{ticketId} has been cancelled.");
         }
 
         private void ViewMyTickets()
         {
             Console.Write("\n  Enter Passenger ID: ");
-            if (!int.TryParse(Console.ReadLine(), out int passId)) { Console.WriteLine("  Invalid ID."); return; }
+            if (!int.TryParse(Console.ReadLine(), out int passId)) { Console.WriteLine("  Please enter a valid number."); return; }
             var myTickets = _tickets.GetByPassenger(passId);
-            if (myTickets.Length == 0) { Console.WriteLine("  No tickets found."); return; }
+            if (myTickets.Length == 0) { Console.WriteLine("  No tickets found for this passenger."); return; }
             Console.WriteLine($"\n  Found {myTickets.Length} ticket(s):");
             foreach (var t in myTickets)
                 Console.WriteLine($"  {t}");
         }
-        
-        // Placeholder for admin menu, can be expanded with actual admin features later
+
         private void AdminMenu()
         {
             Console.WriteLine("\n--- Admin Menu ---");
@@ -131,34 +137,27 @@ namespace BusTimetable.Menu
             if (choice == "1") UpdateCapacity();
         }
         
-        // update the max passenger capacity for a scheduled service
+        // Updates the max passenger capacity for a scheduled service
         private void UpdateCapacity()
         {
             Console.Write("\n  Enter Schedule ID: ");
-            if (!int.TryParse(Console.ReadLine(), out int schedId)) { Console.WriteLine("  Invalid ID."); return; }
+            if (!int.TryParse(Console.ReadLine(), out int schedId)) { Console.WriteLine("  Please enter a valid number."); return; }
             var schedule = _timetable.GetById(schedId);
-            if (schedule == null) { Console.WriteLine("  Schedule not found."); return; }
-
+            if (schedule == null) { Console.WriteLine($"  No schedule found with ID {schedId}."); return; }
             Console.Write($"  Current capacity: {schedule.Capacity}. New capacity: ");
             if (!int.TryParse(Console.ReadLine(), out int newCap) || newCap < schedule.SeatsBooked)
             {
-                Console.WriteLine("  Invalid capacity (cannot be less than seats already booked).");
+                Console.WriteLine($"  Invalid — new capacity must be at least {schedule.SeatsBooked} (seats already booked).");
                 return;
             }
-
             schedule.Capacity = newCap;
             _timetable.Update(schedule);
             _db.UpdateSchedule(schedule);
             Console.WriteLine($"  Schedule #{schedId} capacity updated to {newCap}.");
         }
 
-        // look up an existing passenger by name+email, or create a new one
         private int GetOrCreatePassenger(string name, string email)
         {
-            // simple linear scan of in-memory list
-            // for a larger system we'd index by email but this works for the scale we need
-            var current = _passengers;
-            // PassengerList has no FindByEmail, use AddPassenger for simplicity
             int passId = _db.AddPassenger(name, email);
             _passengers.Add(new Passenger(passId, name, email));
             return passId;
