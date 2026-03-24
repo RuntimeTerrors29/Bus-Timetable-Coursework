@@ -131,7 +131,7 @@ namespace BusTimetable.Database
             ExecuteNonQuery(conn, "UPDATE Schedules SET SeatsBooked = 1 WHERE ScheduleID IN (1, 3, 9);");
         }
 
-        // ── Load methods (DB → data structures) ──────────────────────────────
+        // ── Load methods (DB → in-memory data structures) ───────────────────────
 
         public void LoadStops(BusStopHashTable table)
         {
@@ -192,7 +192,7 @@ namespace BusTimetable.Database
             return list;
         }
 
-        // ── Write methods (data structures → DB) ─────────────────────────────
+        // ── Write methods (in-memory → DB) ──────────────────────────────────────
 
         // Add a new passenger and return the auto-generated ID
         public int AddPassenger(string fullName, string email)
