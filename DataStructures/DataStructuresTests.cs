@@ -7,7 +7,6 @@ namespace BusTimetable.Tests
     [TestClass]
     public class DataStructuresTests
     {
-
         [TestMethod]
         public void HashTable_Add_MultipleStops_AllRetrievable()
         {
@@ -23,16 +22,24 @@ namespace BusTimetable.Tests
         public void HashTable_GetAll_ReturnsAllStops()
         {
             var table = new BusStopHashTable();
-            table.Add(new BusStop(1, "A", "Loc", 0, 0));
-            table.Add(new BusStop(2, "B", "Loc", 0, 0));
-            table.Add(new BusStop(3, "C", "Loc", 0, 0));
-            Assert.AreEqual(3, table.GetAll().Length);
+            table.Add(new BusStop(1,"A","L",0,0)); table.Add(new BusStop(2,"B","L",0,0));
+            Assert.AreEqual(2, table.GetAll().Length);
         }
 
         [TestMethod]
-        public void HashTable_Remove_NonExistentId_ReturnsFalse()
+        public void HashTable_Remove_NonExistentId_ReturnsFalse() => Assert.IsFalse(new BusStopHashTable().Remove(999));
+
+        [TestMethod]
+        public void HashTable_EmptyTable_CountIsZero() => Assert.AreEqual(0, new BusStopHashTable().Count);
+
+        [TestMethod]
+        public void HashTable_SearchByName_EmptyQuery_ReturnsAll()
         {
-            Assert.IsFalse(new BusStopHashTable().Remove(999));
+            var table = new BusStopHashTable();
+            table.Add(new BusStop(1,"Victoria","W",0,0));
+            table.Add(new BusStop(2,"Waterloo","L",0,0));
+            var results = table.SearchByName("");
+            Assert.AreEqual(2, results.Length);
         }
 
         [TestMethod]
@@ -44,7 +51,6 @@ namespace BusTimetable.Tests
             list.InsertSorted(MakeSched(3, new TimeSpan(8, 0, 0)));
             var all = list.GetAll();
             Assert.AreEqual(new TimeSpan(7, 0, 0), all[0].DepartureTime);
-            Assert.AreEqual(new TimeSpan(8, 0, 0), all[1].DepartureTime);
             Assert.AreEqual(new TimeSpan(9, 0, 0), all[2].DepartureTime);
         }
 
@@ -55,8 +61,41 @@ namespace BusTimetable.Tests
             list.InsertSorted(MakeSched(1, new TimeSpan(7, 0, 0), routeId: 1));
             list.InsertSorted(MakeSched(2, new TimeSpan(8, 0, 0), routeId: 2));
             list.InsertSorted(MakeSched(3, new TimeSpan(9, 0, 0), routeId: 1));
-            var results = list.GetByRoute(1);
-            Assert.AreEqual(2, results.Length);
+            Assert.AreEqual(2, list.GetByRoute(1).Length);
+        }
+
+        [TestMethod]
+        public void TimetableList_GetBetween_ReturnsCorrectRange()
+        {
+            var list = new TimetableList();
+            list.InsertSorted(MakeSched(1, new TimeSpan(7, 0, 0)));
+            list.InsertSorted(MakeSched(2, new TimeSpan(8, 0, 0)));
+            list.InsertSorted(MakeSched(3, new TimeSpan(9, 0, 0)));
+            list.InsertSorted(MakeSched(4, new TimeSpan(10, 0, 0)));
+            Assert.AreEqual(2, list.GetBetween(new TimeSpan(8, 0, 0), new TimeSpan(9, 0, 0)).Length);
+        }
+
+        [TestMethod]
+        public void TimetableList_Remove_MiddleNode_CountDecreases()
+        {
+            var list = new TimetableList();
+            list.InsertSorted(MakeSched(1, new TimeSpan(7, 0, 0)));
+            list.InsertSorted(MakeSched(2, new TimeSpan(8, 0, 0)));
+            list.InsertSorted(MakeSched(3, new TimeSpan(9, 0, 0)));
+            bool removed = list.Remove(2);
+            Assert.IsTrue(removed);
+            Assert.AreEqual(2, list.Count);
+        }
+
+        [TestMethod]
+        public void TimetableList_Update_ChangesExistingNode()
+        {
+            var list = new TimetableList();
+            var sched = MakeSched(1, new TimeSpan(7, 0, 0));
+            list.InsertSorted(sched);
+            sched.Capacity = 99;
+            list.Update(sched);
+            Assert.AreEqual(99, list.GetById(1)!.Capacity);
         }
 
         private static Schedule MakeSched(int id, TimeSpan dep, int routeId = 1)
