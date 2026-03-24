@@ -29,14 +29,31 @@ namespace BusTimetable.Tests
             table.Add(new BusStop(2, "B", "Loc", 0, 0));
             table.Add(new BusStop(3, "C", "Loc", 0, 0));
             var all = table.GetAll();
-            Assert.AreEqual(3, all.Length);
+            Assert.AreEqual(3,  all.Length);
         }
 
         [TestMethod]
-        public void HashTable_Remove_NonExistentId_ReturnsFalse()
+        public void  HashTable_Remove_NonExistentId_ReturnsFalse()
         {
             var table = new BusStopHashTable();
             Assert.IsFalse(table.Remove(999));
         }
+
+        // edge case  - remove the only element in the list
+        [TestMethod]
+        public void TimetableList_RemoveOnlyElement_CountIsZero()
+        {
+            var list = new TimetableList();
+            list.InsertSorted(MakeSched(1, new TimeSpan(9, 0, 0)));
+            list.Remove(1);
+            Assert.AreEqual(0, list.Count);
+            Assert.AreEqual(0, list.GetAll().Length);
+        }
+
+
+        //  helper method
+        private static Schedule MakeSched(int id, TimeSpan dep, int routeId = 1)
+            => new Schedule(id, routeId, "Route", dep, dep.Add(TimeSpan.FromMinutes(20)), 50, 0);
     }
 }
+
