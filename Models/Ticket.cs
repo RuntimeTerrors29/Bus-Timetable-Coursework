@@ -1,6 +1,7 @@
 namespace BusTimetable.Models
 {
-    // Shows booked ticket that is linked to the customer,
+    // represents a ticket/booking for a passenger on a scheduled service
+    // IsActive is true when Status == "Active"
     public class Ticket
     {
         public int TicketID { get; set; }
@@ -19,17 +20,19 @@ namespace BusTimetable.Models
                       int scheduleId, string scheduleInfo,
                       DateTime bookingDate, decimal price, string status = "Active")
         {
-            TicketID      = ticketId;
-            PassengerID   = passengerId;
+            TicketID = ticketId;
+            PassengerID = passengerId;
             PassengerName = passengerName;
-            ScheduleID    = scheduleId;
-            ScheduleInfo  = scheduleInfo;
-            BookingDate   = bookingDate;
-            Price         = price;
-            Status        = status;
+            ScheduleID = scheduleId;
+            ScheduleInfo = scheduleInfo;
+            BookingDate = bookingDate;
+            Price = price;
+            Status = status;
         }
 
         public override string ToString()
-            => $"Ticket #{TicketID} | {PassengerName} | {ScheduleInfo} | £{Price:F2} | {Status}";
+        {
+            return $"Ticket #{TicketID} | {PassengerName} | {ScheduleInfo} | £{Price:F2} | {Status}";
+        }
     }
 }
