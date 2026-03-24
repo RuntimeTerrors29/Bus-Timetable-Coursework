@@ -1,7 +1,16 @@
 using BusTimetable.models;
 
 namespace BusTimetable.DataStructures
+
+
 {
+    /// <summary>
+    /// Singly linked list of Schedule objects, kept sorted by DepartureTime ascending.
+    /// InsertSorted maintains the invariant. All query methods assume sorted order.
+    /// </summary>
+    /// 
+
+
     public class TimetableList
     {
         private class Node
