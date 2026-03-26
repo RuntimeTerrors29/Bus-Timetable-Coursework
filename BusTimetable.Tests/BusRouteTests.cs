@@ -10,7 +10,7 @@ namespace BusTimetable.Tests
         public void Test_RouteID_Correct()
         {
             var route = new BusRoute(1, "Route 12", "Central London");
-            Assert.AreEqual(1, route.RouteID);
+            Assert.AreEqual(1, route.RouteId);
         }
 
         [TestMethod]
@@ -24,7 +24,7 @@ namespace BusTimetable.Tests
         public void Test_Description_Correct()
         {
             var route = new BusRoute(1, "Route 25", "Central London to North London");
-            Assert.AreEqual("Central London to North London", route.Description);
+            Assert.AreEqual("Central London to North London", route.RouteDescription);
         }
 
         [TestMethod]
@@ -39,17 +39,17 @@ namespace BusTimetable.Tests
         public void Test_Description_Default_Empty()
         {
             var route = new BusRoute();
-            Assert.AreEqual(string.Empty, route.Description);
+            Assert.AreEqual(string.Empty, route.RouteDescription);
         }
 
         [TestMethod]
         public void Test_RouteID_Zero_Or_Negative()
         {
             var routeZero = new BusRoute(0, "Route 40", "Central London");
-            Assert.AreEqual(0, routeZero.RouteID);
+            Assert.AreEqual(0, routeZero.RouteId);
 
             var routeNeg = new BusRoute(-1, "Route 50", "North London");
-            Assert.AreEqual(-1, routeNeg.RouteID);
+            Assert.AreEqual(-1, routeNeg.RouteId);
         }
     }
 }
