@@ -166,4 +166,3 @@ namespace BusTimetable.DataStructures
         }
     }
 }
-gh
