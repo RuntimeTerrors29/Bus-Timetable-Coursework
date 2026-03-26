@@ -1,4 +1,4 @@
-using BusTimetable.models;
+using BusTimetable.Models;
 
 namespace BusTimetable.DataStructures
 
