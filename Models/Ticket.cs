@@ -12,10 +12,11 @@ namespace BusTimetable.Models
         public DateTime BookingDate { get; set; }
         public decimal Price { get; set; }
         public string Status { get; set; } = "Active";
+
+	// quick check instead of comparing string every time
         public bool IsActive => Status == "Active";
 
         public Ticket() { }
-
         public Ticket(int ticketId, int passengerId, string passengerName,
                       int scheduleId, string scheduleInfo,
                       DateTime bookingDate, decimal price, string status = "Active")
