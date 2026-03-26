@@ -1,5 +1,5 @@
 
-namespace BusTimetable.models
+namespace BusTimetable.Models
 
 {
     public class BusRoute
@@ -9,7 +9,6 @@ namespace BusTimetable.models
         // properties of the bus route, including the route ID, name, and description
 
         public int RouteId { get; set; }
-
         public  string RouteName { get; set; } = string.Empty;
 
         
