@@ -5,9 +5,39 @@ using BusTimetable.Models;
 namespace BusTimetable.Tests
 {
     // tests for the hash table data structure
+
     [TestClass]
     public class BusStopHashTableTests
     {
+        [TestMethod]
+        //Remove stop from middle of a collision chain
+        // IDs 1 and 65 both hash to bucket index 1 in a size-64 table
+        public void Remove_StopFromCollisionChain_OtherStopUnaffected()
+        {
+            var table = new BusStopHashTable(64);
+            table.Add(MakeStop(1, "Stop A"));   // bucket 1
+            table.Add(MakeStop(65, "Stop B"));  // bucket 1 — collision
+            table.Add(MakeStop(129, "Stop C")); // bucket 1 — collision
+
+            bool removed = table.Remove(65);
+
+            Assert.IsTrue(removed);
+            Assert.AreEqual(2, table.Count);
+            Assert.IsNull(table.GetById(65));
+            Assert.IsNotNull(table.GetById(1));
+            Assert.IsNotNull(table.GetById(129));
+        }
+        [TestMethod]
+        // Negative StopID — Math.Abs prevents negative index crash
+        public void Add_NegativeStopId_StoredAndRetrievedCorrectly()
+        {
+            var table = new BusStopHashTable();
+            table.Add(MakeStop(-5, "Negative Stop"));
+            var result = table.GetById(-5);
+            Assert.IsNotNull(result);
+            Assert.AreEqual("Negative Stop", result.StopName);
+        }
+
         // helper to make a stop quickly without repeating constructor each time
         private BusStop MakeStop(int id, string name)
         {
@@ -119,6 +149,34 @@ namespace BusTimetable.Tests
     [TestClass]
     public class TimetableListTests
     {
+        [TestMethod]
+        //Remove only element — head becomes null, count becomes zero
+        public void Remove_OnlyElement_CountIsZeroAndHeadIsNull()
+        {
+            var list = new TimetableList();
+            list.InsertSorted(MakeSchedule(1, 1, "07:00", "07:30"));
+
+            bool removed = list.Remove(1);
+
+            Assert.IsTrue(removed);
+            Assert.AreEqual(0, list.Count);
+            Assert.AreEqual(0, list.GetAll().Length);
+        }
+        [TestMethod]
+        //GetBetween exits early — schedules beyond upper bound not returned
+        public void GetBetween_UpperBoundExceeded_OnlyInRangeReturned()
+        {
+            var list = new TimetableList();
+            list.InsertSorted(MakeSchedule(1, 1, "07:00", "07:30"));
+            list.InsertSorted(MakeSchedule(2, 1, "09:00", "09:30"));
+            list.InsertSorted(MakeSchedule(3, 1, "11:00", "11:30"));
+            list.InsertSorted(MakeSchedule(4, 1, "13:00", "13:30"));
+
+            var results = list.GetBetween(TimeSpan.Parse("08:00"), TimeSpan.Parse("10:00"));
+
+            Assert.AreEqual(1, results.Length);
+            Assert.AreEqual(TimeSpan.Parse("09:00"), results[0].DepartureTime);
+        }
         private Schedule MakeSchedule(int id, int routeId, string dep, string arr)
         {
             return new Schedule(id, routeId, "Route " + routeId, TimeSpan.Parse(dep), TimeSpan.Parse(arr), 50);
@@ -212,6 +270,19 @@ namespace BusTimetable.Tests
     [TestClass]
     public class TicketListTests
     {
+        [TestMethod]
+        //GetByPassenger with no matching tickets — returns empty array
+        public void GetByPassenger_NoMatchingTickets_ReturnsEmptyArray()
+        {
+            var list = new TicketList();
+            list.Add(MakeTicket(1, 1));
+            list.Add(MakeTicket(2, 1));
+
+            var results = list.GetByPassenger(99);
+
+            Assert.IsNotNull(results);
+            Assert.AreEqual(0, results.Length);
+        }
         private Ticket MakeTicket(int id, int passengerId, string status = "Active")
         {
             return new Ticket(id, passengerId, "Test User", 1, "Route 1 07:00-07:30", DateTime.Now, 3.50m, status);
