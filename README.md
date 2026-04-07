@@ -1,8 +1,8 @@
 # Bus Timetable & Ticketing System
-CST2550 Group Coursework — Middlesex University London
+CST2550 Group Coursework Middlesex University London
 
 ## What is this?
-A console app for managing bus timetables and ticket bookings, built for our CST2550 group coursework. Uses C# .NET 8 with SQLite for storage. All data structures (hash table, linked lists) are written from scratch — no built-in collections like `List<T>` or `Dictionary`.
+A console app for managing bus timetables and ticket bookings, built for our CST2550 group coursework. Uses C# .NET 8 with SQLite for storage. All data structures (hash table, linked lists) are written from scratch no built-in collections like `List<T>` or `Dictionary`.
 
 ## Requirements
 
