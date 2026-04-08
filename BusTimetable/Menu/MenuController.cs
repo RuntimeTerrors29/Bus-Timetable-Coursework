@@ -13,15 +13,15 @@ namespace BusTimetable.Menu
         private readonly TicketList _tickets;
         private readonly PassengerList _passengers;
         private readonly DatabaseManager _db;
-        
+
         // Constructor takes all data structures and database manager as dependencies
         public MenuController(BusStopHashTable stops, TimetableList timetable, TicketList tickets, PassengerList passengers, DatabaseManager db)
         {
-            _stops      = stops;
-            _timetable  = timetable;
-            _tickets    = tickets;
+            _stops = stops;
+            _timetable = timetable;
+            _tickets = tickets;
             _passengers = passengers;
-            _db         = db;
+            _db = db;
         }
 
         // loops until user picks exit
@@ -38,11 +38,11 @@ namespace BusTimetable.Menu
                 switch (choice)
                 {
                     case "1": ViewTimetable(); break;
-                    case "2": SearchStops();   break;
-                    case "3": BookTicket();    break;
-                    case "4": CancelTicket();  break;
-                    case "5": ViewMyTickets(); break;
-                    case "6": AdminMenu();     break;
+                    case "2": SearchStops(); break;
+                    case "3": BookTicket(); break;
+                    case "4": CancelTicket(); break;
+                    case "5": CheckTicketStatus(); break;
+                    case "6": AdminMenu(); break;
                     case "0": running = false; break;
                     default:
                         Console.WriteLine("  Invalid option, please try again.");
@@ -50,7 +50,7 @@ namespace BusTimetable.Menu
                 }
             }
         }
-        
+
         // Private methods for each menu action
         private static void ShowMainMenu()
         {
@@ -59,7 +59,7 @@ namespace BusTimetable.Menu
             Console.WriteLine("  2. Search bus stops");
             Console.WriteLine("  3. Book a ticket");
             Console.WriteLine("  4. Cancel a ticket");
-            Console.WriteLine("  5. View my tickets");
+            Console.WriteLine("  5. Check ticket status");
             Console.WriteLine("  6. Admin");
             Console.WriteLine("  0. Exit");
             Console.Write("\nSelect option: ");
@@ -71,8 +71,8 @@ namespace BusTimetable.Menu
             Console.WriteLine($"\n  {all.Length} scheduled services:\n");
             foreach (var s in all)
                 Console.WriteLine($"  {s}");
-        } 
-        
+        }
+
         // Method to search bus stops by name and display results
         private void SearchStops()
         {
@@ -100,9 +100,9 @@ namespace BusTimetable.Menu
 
             var schedule = _timetable.GetById(schedId);
             if (schedule == null) { Console.WriteLine($"  No schedule found with ID {schedId}."); return; }
-            if (schedule.IsFull)  { Console.WriteLine("  Sorry, that service is fully booked."); return; }
+            if (schedule.IsFull) { Console.WriteLine("  Sorry, that service is fully booked."); return; }
 
-            int passId   = _db.AddPassenger(name, email);
+            int passId = _db.AddPassenger(name, email);
             int ticketId = _db.AddBooking(passId, schedId, 3.50m);
             _passengers.Add(new Passenger(passId, name, email));
             schedule.SeatsBooked++;
@@ -113,7 +113,7 @@ namespace BusTimetable.Menu
 
             Console.WriteLine($"\n  Booking confirmed! Ticket #{ticketId} — {schedule.RouteName} at {schedule.DepartureTime:hh\\:mm}");
         }
-        
+
         // Method to cancel a ticket by ID, with error handling and seat count adjustment
         private void CancelTicket()
         {
@@ -133,17 +133,20 @@ namespace BusTimetable.Menu
             Console.WriteLine($"  Ticket #{ticketId} has been cancelled.");
         }
 
-        private void ViewMyTickets()
+        private void CheckTicketStatus()
         {
-            Console.Write("\n  Enter Passenger ID: ");
-            if (!int.TryParse(Console.ReadLine(), out int passId)) { Console.WriteLine("  Please enter a valid number."); return; }
+            Console.Write("\n  Enter Ticket ID: ");
+            if (!int.TryParse(Console.ReadLine(), out int ticketId)) { Console.WriteLine("  Please enter a valid number."); return; }
 
-            var myTickets = _tickets.GetByPassenger(passId);
-            if (myTickets.Length == 0) { Console.WriteLine("  No tickets found for this passenger."); return; }
+            var ticket = _tickets.GetById(ticketId);
+            if (ticket == null) { Console.WriteLine($"  No ticket found with ID {ticketId}."); return; }
 
-            Console.WriteLine($"\n  Found {myTickets.Length} ticket(s):");
-            foreach (var t in myTickets)
-                Console.WriteLine($"  {t}");
+            Console.WriteLine($"\n  Ticket #{ticket.TicketID}");
+            Console.WriteLine($"  Passenger : {ticket.PassengerName}");
+            Console.WriteLine($"  Route     : {ticket.ScheduleInfo}");
+            Console.WriteLine($"  Booked on : {ticket.BookingDate:dd MMM yyyy HH:mm}");
+            Console.WriteLine($"  Price     : £{ticket.Price:0.00}");
+            Console.WriteLine($"  Status    : {ticket.Status}");
         }
 
         private void AdminMenu()
@@ -161,7 +164,7 @@ namespace BusTimetable.Menu
             Console.WriteLine("  0. Back");
             Console.Write("\nSelect: ");
         }
-        
+
         // Updates the max passenger capacity for a scheduled service
         private void UpdateCapacity()
         {
