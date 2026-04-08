@@ -29,7 +29,7 @@ namespace BusTimetable.Models
         }
 
         public override string ToString()
-            => $"[{ScheduleID}] {RouteName}  {DepartureTime:hh\\:mm} → {ArrivalTime:hh\\:mm}  " +
+            => $"[{ScheduleID}] {RouteName}  {DepartureTime:hh\\:mm} -> {ArrivalTime:hh\\:mm}  " +
                $"({SeatsBooked}/{Capacity} booked  |  {AvailableSeats} remaining)";
     }
 }
