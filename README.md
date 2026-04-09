@@ -1,3 +1,9 @@
+utreah - Ugur Ersoy
+Tz0r - Luis Oliveira 
+stefan291201 - Florin Stefan Grosu
+AkamMo159 - Akram Mohamed 
+Bogdan Nicolescu - Bogdan Nicolescu
+
 # Bus Timetable & Ticketing System
 CST2550 Group Coursework Middlesex University London
 
